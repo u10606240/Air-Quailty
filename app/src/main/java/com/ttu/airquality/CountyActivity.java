@@ -34,9 +34,10 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.lang.reflect.Method;
-import java.net.HttpURLConnection;
+import java.io.UnsupportedEncodingException;
+import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -104,21 +105,33 @@ public class CountyActivity extends Activity {
     };
     private TimerTask taskScreen;
 
-    public static String readParse(String urlPath) throws Exception {
+    public String readParse(String urlPath) {
+        long a = System.currentTimeMillis();
         ByteArrayOutputStream outStream = new ByteArrayOutputStream();
-        byte[] data = new byte[1024];
-
-        int len = 0;
-
-        URL url = new URL(urlPath);
-
-        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-
-        InputStream inStream = conn.getInputStream();
-        while ((len = inStream.read(data)) != -1) {
-            outStream.write(data, 0, len);
+        try {
+            URL myurl = new URL(urlPath);
+            URLConnection myurlcon = myurl.openConnection();
+            myurlcon.setConnectTimeout(1000);
+            myurlcon.setReadTimeout(1000);
+//            BufferedReader in = new BufferedReader(new InputStreamReader(myurlcon.getInputStream(),"UTF-8"));
+            byte[] data = new byte[1024];
+            int len = 0;
+            InputStream inStream = myurlcon.getInputStream();
+            while ((len = inStream.read(data)) != -1) {
+                outStream.write(data, 0, len);
+            }
+            inStream.close();
+//            String inputLine;
+//            while ((inputLine = in.readLine()) != null){
+//                System.out.println(inputLine);
+//                in.close();
+//                System.out.println(System.currentTimeMillis()-a);
+//            }
+        } catch (MalformedURLException | UnsupportedEncodingException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
-        inStream.close();
         return new String(outStream.toByteArray());//通過outStream.toByteArray獲取到寫的數據
     }
 
@@ -143,15 +156,16 @@ public class CountyActivity extends Activity {
         if (bluetoothAdapter == null) {
 //            Toast.makeText(this, "不支持藍芽", Toast.LENGTH_LONG).show();
         } else if (!bluetoothAdapter.isEnabled()) {
-            Log.d("true", "開始連接");
-            Intent intent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-            startActivityForResult(intent, ENABLE_BLUETOOTH);
+//            Log.d("true", "開始連接");
+//            Intent intent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+//            startActivityForResult(intent, ENABLE_BLUETOOTH);
         }
 
         new Thread(new Runnable() {
             @Override
             public void run() {
                 while (searchDone) {
+                    Log.d("Winnie", "searchDone:" + searchDone);
                     try {
                         parseJsonData(readParse(host));
                     } catch (Exception e) {
@@ -159,7 +173,7 @@ public class CountyActivity extends Activity {
                     }
                     //這裡休眠是為了讓子線程结束 lists才有值
                     try {
-                        Thread.sleep(500);
+                        Thread.sleep(1000);
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
@@ -175,7 +189,7 @@ public class CountyActivity extends Activity {
                 handler.sendMessage(message);
             }
         };
-        timer100ms.schedule(taskScreen, 500, 500);  //启动定时器 500ms
+        timer100ms.schedule(taskScreen, 1000, 1000);  //启动定时器 500ms
     }
 
     private void initView() {
@@ -194,6 +208,7 @@ public class CountyActivity extends Activity {
             public void onClick(View v) {
                 // TODO Auto-generated method stub
                 if (lists.size() > 0) {
+                    searchDone = false;
                     Intent intent = new Intent();
                     intent.setClass(CountyActivity.this, MainActivity.class);
                     startActivity(intent);
@@ -222,54 +237,54 @@ public class CountyActivity extends Activity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        try {
-            if (bluetoothAdapter != null) {
-                bluetoothSocket.close();
-            }
-        } catch (IOException e) {
-            System.out.println("onDestroy錯誤!!!");
-            e.printStackTrace();
-        }
+//        try {
+//            if (bluetoothAdapter != null) {
+//                bluetoothSocket.close();
+//            }
+//        } catch (IOException e) {
+//            System.out.println("onDestroy錯誤!!!");
+//            e.printStackTrace();
+//        }
     }
 
-    private BluetoothSocket createBluetoothSocket(BluetoothDevice device) throws IOException {
-        if (Build.VERSION.SDK_INT >= 10) {
-            try {
-                final Method m = device.getClass().getMethod("createInsecureRfcommSocketToServiceRecord", new Class[]{UUID.class});
-                return (BluetoothSocket) m.invoke(device, MY_UUID_SECURE);
-            } catch (Exception e) {
-                Log.e("true", "Could not create Insecure RFComm Connection", e);
-            }
-        }
-        return device.createRfcommSocketToServiceRecord(MY_UUID_SECURE);
-    }
+//    private BluetoothSocket createBluetoothSocket(BluetoothDevice device) throws IOException {
+//        if (Build.VERSION.SDK_INT >= 10) {
+//            try {
+//                final Method m = device.getClass().getMethod("createInsecureRfcommSocketToServiceRecord", new Class[]{UUID.class});
+//                return (BluetoothSocket) m.invoke(device, MY_UUID_SECURE);
+//            } catch (Exception e) {
+//                Log.e("true", "Could not create Insecure RFComm Connection", e);
+//            }
+//        }
+//        return device.createRfcommSocketToServiceRecord(MY_UUID_SECURE);
+//    }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-        Log.d("true", "...onResume - try connect...");
-        if (bluetoothAdapter != null) {
-            bluetoothDevice = bluetoothAdapter.getRemoteDevice(btAddress);
-
-            try {
-                bluetoothSocket = createBluetoothSocket(bluetoothDevice);
-            } catch (IOException e) {
-                Log.d("Fatal Error", "In onResume() and socket create failed: " + e.getMessage() + ".");
-            }
-            Log.d("true", "...Connecting...");
-            try {
-                bluetoothSocket.connect();
-                Log.d("true", "....Connection ok...");
-            } catch (IOException e) {
-                try {
-                    bluetoothSocket.close();
-                    Log.d("true", "....Close...");
-                } catch (IOException e2) {
-                    Log.d("Fatal Error", "In onResume() and unable to close socket during connection failure" + e2.getMessage() + ".");
-                }
-            }
-        }
-    }
+//    @Override
+//    protected void onResume() {
+//        super.onResume();
+//        Log.d("true", "...onResume - try connect...");
+//        if (bluetoothAdapter != null) {
+//            bluetoothDevice = bluetoothAdapter.getRemoteDevice(btAddress);
+//
+//            try {
+//                bluetoothSocket = createBluetoothSocket(bluetoothDevice);
+//            } catch (IOException e) {
+//                Log.d("Fatal Error", "In onResume() and socket create failed: " + e.getMessage() + ".");
+//            }
+//            Log.d("true", "...Connecting...");
+//            try {
+//                bluetoothSocket.connect();
+//                Log.d("true", "....Connection ok...");
+//            } catch (IOException e) {
+//                try {
+//                    bluetoothSocket.close();
+//                    Log.d("true", "....Close...");
+//                } catch (IOException e2) {
+//                    Log.d("Fatal Error", "In onResume() and unable to close socket during connection failure" + e2.getMessage() + ".");
+//                }
+//            }
+//        }
+//    }
 
     private void parseJsonData(String string) throws JSONException {
 //        try {
@@ -367,6 +382,7 @@ public class CountyActivity extends Activity {
         /**沒有權限則返回*/
         if (checkSelfPermission(android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED ||
                 checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            searchDone = false;
             Toast.makeText(this, "未開啟定位權限", Toast.LENGTH_LONG).show();
             Intent intent = new Intent();
             intent.setClass(CountyActivity.this, MainActivity.class);

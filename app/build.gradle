@@ -9,16 +9,15 @@ def getVersion() {
     return properties.getProperty("VERSION_CODE")
 }
 //修改输出APK包名
-android.applicationVariants.all { variant ->
-    variantType = variant.buildType.name
-    variant.outputs.each { output ->
-        variant.outputs.all {
-//        outputFileName = "${variant.name}-${variant.versionName}.apk"
-            bundleName = "AirQuality" + "-" + getVersion()
-            outputFileName = bundleName + '.aab'
-        }
-    }
-}
+//android.applicationVariants.all { variant ->
+//    variantType = variant.buildType.name
+//    variant.outputs.each { output ->
+//        variant.outputs.all {
+//            bundleName = "AirQuality" + "-" + getVersion()
+//            outputFileName = bundleName + '.apk'
+//        }
+//    }
+//}
 android {
     compileSdk 34
 
@@ -26,8 +25,8 @@ android {
         applicationId "com.ttu.airquality"
         minSdk 23
         targetSdk 34
-        versionCode 1
-        versionName "1.0"
+        versionCode 6
+        versionName "1.5"
 //        buildConfigField "String", "VERSION", "\"" + getVersion() + "\""
         setProperty("archivesBaseName", "${applicationId}-v${versionName}")
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
@@ -45,22 +44,6 @@ android {
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
-    }
-    signingConfigs {
-
-//        debug {
-//            storeFile file('.\\key\\default.jks')
-//            storePassword '123456'
-//            keyAlias 'key0'
-//            storePassword '123456'
-//            keyPassword '123456'
-//        }
-        release {
-            storeFile file('C:\\Users\\Winnie\\Desktop\\AirQuality\\key\\default.jks')
-            storePassword '123456'
-            keyAlias 'key0'
-            keyPassword '123456'
-        }
     }
 }
 

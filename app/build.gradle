@@ -19,14 +19,14 @@ def getVersion() {
 //    }
 //}
 android {
-    compileSdk 34
+    compileSdk 36
 
     defaultConfig {
         applicationId "com.ttu.airquality"
-        minSdk 23
-        targetSdk 34
-        versionCode 6
-        versionName "1.5"
+        minSdk 26
+        targetSdk 36
+        versionCode 7
+        versionName "1.6"
 //        buildConfigField "String", "VERSION", "\"" + getVersion() + "\""
         setProperty("archivesBaseName", "${applicationId}-v${versionName}")
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
@@ -45,6 +45,7 @@ android {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
+    namespace 'com.ttu.airquality'
 }
 
 dependencies {
